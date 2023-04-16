@@ -36,9 +36,6 @@ class Cell(QGraphicsPixmapItem):
         self.type = cellType
         self.updateCell()
 
-    def getType(self):
-        return self.type
-
     def getCurrentPixmap(self) -> QPixmap:
         pixmap = None
         if self.type == 6:
@@ -69,59 +66,63 @@ class GameField:
         self.win = None
         self.player = None
         self.level = lev
-        # self.row = len(self.level)
-        # self.col = len(self.level[0])
         self.list_of_cells = []
-        # self.list_of_left_right_cells = []
-        # self.list_of_up_down_cells = []
-        # self.list_of_movable_cells = []
-        # self.list_of_unmovable_cells = []
 
     def initialize_level(self):
         for i, row in enumerate(self.level):
             self.list_of_cells.append([])
             for cellType in row:
                 self.list_of_cells[i].append(Cell(cellType))
-                # if self.level[i][j] == 0:
-                #     self.list_of_cells.append((i, j))
-                # if self.level[i][j] == 1:
-                #     self.list_of_up_down_cells.append((i, j))
-                # if self.level[i][j] == 2:
-                #     self.list_of_left_right_cells.append((i, j))
-                # if self.level[i][j] == 3:
-                #     self.list_of_movable_cells.append((i, j))
-                # if self.level[i][j] == 4:
-                #     self.list_of_unmovable_cells.append((i, j))
-                # if self.level[i][j] == 5:
-                #     self.win = (i, j)
-                # if self.level[i][j] == 6:
-                #     self.player = Player(i, j)
 
     def move(self, x, y):
-        self.player.posX = self.player.posX + x # Переделать перемещение, так как оно сделано только в положительную сторону
+        dp = 2
+        step = 1
+        length = len(self.level) - 1
+        if x < 0:
+            step = -1
+            length = -1
+
+        if self.list_of_cells[self.player.posY][self.player.posX + x].isMovableX():
+            self.list_of_cells[self.player.posY][self.player.posX + x].setType(0)
+            for i in range(self.player.posX + 2 * x, length, step):
+                if self.list_of_cells[self.player.posY][self.player.posX + dp * x].isMovableX():
+                    self.list_of_cells[self.player.posY][self.player.posX + dp * x].setType(2)
+                    dp = dp + 1
+                else:
+                    break
+
+        if self.list_of_cells[self.player.posY + y][self.player.posX].isMovableY():
+            self.list_of_cells[self.player.posY + y][self.player.posX + x].setType(0)
+            for i in range(self.player.posX + 2 * y, length, step):
+                if self.list_of_cells[self.player.posY + dp * y][self.player.posX].isMovableY():
+                    self.list_of_cells[self.player.posY + dp * y][self.player.posX].setType(1)
+                    dp = dp + 1
+                else:
+                    break
+
+        self.player.posX = self.player.posX + x
         self.player.posY = self.player.posY + y
-        if (self.player.posX + x, self.player.posY + y) in self.list_of_left_right_cells \
-                and (self.player.posX + 2 * x < len(self.level) or self.player.posY + 2 * y < len(self.player[0])):
-            self.list_of_left_right_cells.append((self.player.posX + 2 * x, self.player.posY + y))
-            self.list_of_left_right_cells.remove((self.player.posX + x, self.player.posY + y))
-        if (self.player.posX + x, self.player.posY + y) in self.list_of_movable_cells \
-                and (self.player.posX + 2 * x < len(self.level) or self.player.posY + 2 * y < len(self.player[0])):
-            self.list_of_movable_cells.append((self.player.posX + 2 * x, self.player.posY + 2 * y))
-            self.list_of_movable_cells.remove((self.player.posX + x, self.player.posY + y))
+        self.list_of_cells[self.player.posY - y][self.player.posX - x].setType(0)
 
     def keyPressEvent(self, event):
-        if event.key == Qt.Key_Right and self.player.posX + 1 < len(self.level) \
-                and (self.player.posX + 1, self.player.posY) not in self.list_of_unmovable_cells \
-                and (self.player.posX + 1, self.player.posY) not in self.list_of_up_down_cells:
+        if event.key == Qt.Key_Right and self.player.posX + 1 < len(self.level) and \
+                (self.list_of_cells[self.player.posY][self.player.posX + 1].isMovableX() or
+                 self.list_of_cells[self.player.posY][self.player.posX + 1].getType() == 0):
             self.move(1, 0)
-        if event.key == Qt.Key_Left and self.player.posX - 1 > -1 \
-                and (self.player.posX - 1, self.player.posY) not in self.list_of_unmovable_cells:
+
+        if event.key == Qt.Key_Left and self.player.posX - 1 > -1 and \
+                (self.list_of_cells[self.player.posY][self.player.posX - 1].isMovableX() or
+                 self.list_of_cells[self.player.posY][self.player.posX - 1].getType() == 0):
             self.move(-1, 0)
-        if event.key == Qt.Key_Up and self.player.posY - 1 > - 1 \
-                and (self.player.posX, self.player.posY - 1) not in self.list_of_unmovable_cells:
+
+        if event.key == Qt.Key_Up and self.player.posY - 1 > - 1 and \
+                (self.list_of_cells[self.player.posY - 1][self.player.posX].isMovableY() or
+                 self.list_of_cells[self.player.posY - 1][self.player.posX].getType() == 0):
             self.move(0, -1)
-        if event.key == Qt.Key_Down and self.player.posY + 1 < len(self.level[0]) \
-                and (self.player.posX, self.player.posY + 1) not in self.list_of_unmovable_cells:
+
+        if event.key == Qt.Key_Down and self.player.posY + 1 < len(self.level[0]) and \
+                (self.list_of_cells[self.player.posY + 1][self.player.posX].isMovableY() or
+                 self.list_of_cells[self.player.posY + 1][self.player.posX].getType() == 0):
             self.move(0, 1)
 
 
@@ -131,31 +132,9 @@ class MyWindow(QGraphicsScene):
         super().__init__()
         self.item_list = []
         self.selected_item = None
-        # screen_geometry = QApplication.desktop().availableGeometry()
-        # window_width = 1200
-        # window_height = 1000
-        # window_x = (screen_geometry.width() - window_width) // 2
-        # window_y = (screen_geometry.height() - window_height) // 2
-        # self.setGeometry(window_x, window_y, window_width, window_height)
         self.matrix = read_level('levels/01.txt')
         self.initUI()
         self.game = GameField
-
-        # main_layout = QGridLayout(self)
-        #
-        # # Создание виджета для игрового поля
-        # self.game_board = QWidget(self)
-        # main_layout.addWidget(self.game_board, 0, Qt.AlignHCenter)
-        #
-        # buttons_container = QWidget(self)
-        # buttons_layout = QVBoxLayout(buttons_container)
-        # buttons_layout.setContentsMargins(0, 10, 0, 0)
-        # buttons_layout.setSpacing(10)
-        #
-        # self.load_button = QPushButton("Load", self)
-        # self.load_button.setMaximumSize(150, 70)  # Увеличение размеров кнопки
-        # self.load_button.clicked.connect(self.load_matrix)
-        # buttons_layout.addWidget(self.load_button)
 
     def initUI(self):
         # Создаем элементы для графической сцены
@@ -163,7 +142,7 @@ class MyWindow(QGraphicsScene):
             for j in range(len(self.matrix[0])):
                 if self.matrix[i][j] == 6:
                     pixmap = QPixmap("images/Player.png")
-                    new_pixmap = pixmap.scaled(pixmap.width()*2, pixmap.height()*2)
+                    new_pixmap = pixmap.scaled(pixmap.width() * 2, pixmap.height() * 2)
                     item = QGraphicsPixmapItem(new_pixmap)
                     self.selected_item = item
                     item.setPos(j * 64, i * 64)
@@ -234,15 +213,6 @@ class MyWindow(QGraphicsScene):
             new_x = pos.x() + x * 64
             new_y = pos.y() + y * 64
             self.selected_item.setPos(new_x, new_y)
-    #
-    # def mousePressEvent(self, event):
-    #     # Обрабатываем клик мыши для выбора элемента
-    #     pos = event.scenePos()
-    #     items = self.items(pos)
-    #     for item in items:
-    #         if isinstance(item, QGraphicsPixmapItem):
-    #             self.selected_item = item
-    #             break
 
 
 if __name__ == '__main__':
