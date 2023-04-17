@@ -59,9 +59,12 @@ class MyScene(QGraphicsScene):
                 break
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    scene = MyScene()
-    view = QGraphicsView(scene)
-    view.show()
-    sys.exit(app.exec())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     scene = MyScene()
+#     view = QGraphicsView(scene)
+#     view.show()
+#     sys.exit(app.exec())
+
+for i in range(10, 0, -1):
+    print(i)
