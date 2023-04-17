@@ -15,14 +15,31 @@ class GameField:
             return False
         return True
 
+    def checkMoveY(self, dx, dy):
+        if self.list_of_cells[dy][dx].isMovableY() and self.checkMove(dx, dy):
+            return True
+        return False
+
+    def checkMoveX(self, dx, dy):
+        if self.list_of_cells[dy][dx].isMovableX() and self.checkMove(dx, dy):
+            return True
+        return False
+
     def move(self, x, y):
-        if not self.checkMove(self.player.posX + x, self.player.posY + y):
+        if (not self.checkMove(self.player.posX + x, self.player.posY + y)
+                or self.list_of_cells[self.player.posY][self.player.posX + x].getType() == 1
+                or self.list_of_cells[self.player.posY + y][self.player.posX].getType() == 2):
             return
+
         step = 1
-        length = len(self.board)
+        length_y = len(self.board)
+        length_x = len(self.board[0])
         if x < 0 or y < 0:
             step = -1
-            length = 0
+            length_y = -1
+            length_x = -1
+        cells_y = []
+        cells_x = []
 
         # if (self.player.posX + x >= len(self.board[0]) or self.player.posX + x < 0 or
         #         self.player.posY + y >= len(self.board) or self.player.posY + y < 0):
@@ -39,19 +56,67 @@ class GameField:
         #         else:
         #             break
 
-        if self.list_of_cells[self.player.posY + y][self.player.posX].isMovableY() and self.checkMove(self.player.posX, self.player.posY + y):
-            if self.checkMove(self.player.posX, self.player.posY + 2 * y):
-                print("111")
-                self.list_of_cells[self.player.posY + 2 * y][self.player.posX].setType(self.list_of_cells[self.player.posY + y][self.player.posX].getType())
-            else:
-                return
+        if (self.list_of_cells[self.player.posY + y][self.player.posX].isMovableY()
+                and self.checkMove(self.player.posX, self.player.posY + y)):
+            for i in range(self.player.posY + y, length_y, step):
+                if self.checkMoveY(self.player.posX, i):
+                    cells_y.append(i)
+                else:
+                    break
 
-        if self.list_of_cells[self.player.posY][self.player.posX + x].isMovableX() and self.checkMove(self.player.posX + x, self.player.posY):
-            if self.checkMove(self.player.posX + 2 * x, self.player.posY):
-                print("222")
-                self.list_of_cells[self.player.posY][self.player.posX + 2 * x].setType(self.list_of_cells[self.player.posY][self.player.posX + x].getType())
-            else:
-                return
+            print(cells_y)
+
+            for i in range(len(cells_y) - 1, -1, -1):
+                if (self.checkMove(self.player.posX, cells_y[i] + step)
+                        and self.list_of_cells[cells_y[i] + step][self.player.posX].getType() != 2):
+                    print("not fuck y")
+                    self.list_of_cells[cells_y[i] + step][self.player.posX].setType(self.list_of_cells[cells_y[i]][self.player.posX].getType())
+                else:
+                    cells_y.clear()
+                    print("fuck y")
+                    return
+            print("f y = ", cells_y)
+
+            cells_y.clear()
+
+        if (self.list_of_cells[self.player.posY][self.player.posX + x].isMovableX()
+                and self.checkMove(self.player.posX + x, self.player.posY)):
+            for i in range(self.player.posX + x, length_x, step):
+                if self.checkMoveX(i, self.player.posY):
+                    cells_x.append(i)
+                else:
+                    break
+
+            print(cells_x)
+
+            for i in range(len(cells_x) - 1, -1, -1):
+                if (self.checkMove(cells_x[i] + step, self.player.posY)
+                        and self.list_of_cells[self.player.posY][cells_x[i] + step].getType() != 1):
+                    print("not fuck x")
+                    self.list_of_cells[self.player.posY][cells_x[i] + step].setType(self.list_of_cells[self.player.posY][cells_x[i]].getType())
+                else:
+                    cells_x.clear()
+                    print("fuck x")
+                    return
+            print("f x = ", cells_x)
+
+            cells_x.clear()
+
+        # if (self.list_of_cells[self.player.posY + y][self.player.posX].isMovableY() # Перемещение по Y
+        #         and self.checkMove(self.player.posX, self.player.posY + y)):
+        #     if self.checkMove(self.player.posX, self.player.posY + 2 * y):
+        #         print("111")
+        #         self.list_of_cells[self.player.posY + 2 * y][self.player.posX].setType(self.list_of_cells[self.player.posY + y][self.player.posX].getType())
+        #     else:
+        #         return
+
+        # if (self.list_of_cells[self.player.posY][self.player.posX + x].isMovableX() and # Перемещение по X
+        #         self.checkMove(self.player.posX + x, self.player.posY)):
+        #     if self.checkMove(self.player.posX + 2 * x, self.player.posY):
+        #         print("222")
+        #         self.list_of_cells[self.player.posY][self.player.posX + 2 * x].setType(self.list_of_cells[self.player.posY][self.player.posX + x].getType())
+        #     else:
+        #         return
 
         # if (self.list_of_cells[self.player.posY + y][self.player.posX].isMovableY()
         #         and self.checkMove(self.player.posY + y, self.player.posX)):
