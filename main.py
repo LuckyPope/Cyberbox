@@ -1,8 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QMenu, QFileDialog, QVBoxLayout, QPushButton, \
-    QGridLayout, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView
+from PyQt6.QtWidgets import QApplication, QGraphicsScene, QGraphicsView,QPushButton, QMessageBox
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap, QPainter, QKeyEvent
+from PyQt6.QtGui import QKeyEvent
 
 from Cell import Cell
 from GameField import GameField
@@ -18,14 +17,37 @@ def read_level(filename):
     return m
 
 
-class MyWindow(QGraphicsScene):
+class MyScene(QGraphicsScene):
 
     def __init__(self):
         super().__init__()
         self.board = []
-        self.selected_item = None
         self.player = Player(0, 0)
-        self.matrix = read_level('levels/02.txt')
+        self.matrix = []
+        self.button_level1 = QPushButton("level 1")
+        self.button_level1.clicked.connect(self.initLevel1)
+        self.button_level2 = QPushButton("level 2")
+        self.button_level2.clicked.connect(self.initLevel2)
+        self.initializeButton()
+        self.setSceneRect(0, 0, 960, 700)
+        self.initUI()
+        self.game = GameField(self.board, self.player)
+
+    def initializeButton(self):
+        self.button_level1.move(0, 645)
+        self.button_level2.move(0, 670)
+        self.addWidget(self.button_level1)
+        self.addWidget(self.button_level2)
+
+    def initLevel1(self):
+        self.matrix = read_level("levels/01.txt")
+        self.board.clear()
+        self.initUI()
+        self.game = GameField(self.board, self.player)
+
+    def initLevel2(self):
+        self.matrix = read_level("levels/02.txt")
+        self.board.clear()
         self.initUI()
         self.game = GameField(self.board, self.player)
 
@@ -40,29 +62,44 @@ class MyWindow(QGraphicsScene):
                 self.board[i].append(item)
                 self.addItem(item)
 
-        self.setFocus()
-
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
             self.move_item(-1, 0)
+            if self.game.win:
+                self.win()
         elif event.key() == Qt.Key.Key_Right:
             self.move_item(1, 0)
+            if self.game.win:
+                self.win()
         elif event.key() == Qt.Key.Key_Up:
             self.move_item(0, -1)
+            if self.game.win:
+                self.win()
         elif event.key() == Qt.Key.Key_Down:
             self.move_item(0, 1)
+            if self.game.win:
+                self.win()
+        if event.key() == Qt.Key.Key_R:
+            self.board.clear()
+            self.initUI()
+            self.game = GameField(self.board, self.player)
 
     def move_item(self, x, y):
         self.game.move(x, y)
-            # pos = self.selected_item.pos()
-            # new_x = pos.x() + x * 64
-            # new_y = pos.y() + y * 64
-            # self.selected_item.setPos(new_x, new_y)
+
+    @staticmethod
+    def win():
+        dlg = QMessageBox()
+        dlg.setWindowTitle("Победа")
+        dlg.setText("Уровень пройден!")
+        dlg.exec()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    scene = MyWindow()
+    scene = MyScene()
     view = QGraphicsView(scene)
+    view.setMinimumSize(990, 705)
+    view.setMaximumSize(990, 705)
     view.show()
     sys.exit(app.exec())
